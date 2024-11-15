@@ -1,0 +1,2 @@
+[database]
+url = "postgres://sorryu:ryujs041221@localhost:5432/club_manager_mvp"

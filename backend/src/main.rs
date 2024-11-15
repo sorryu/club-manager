@@ -13,7 +13,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 */
 
 use std::env;
-use log::{info, warn, error};
+use log::{trace, debug, info, warn, error};
 use env_logger;
 
 use config::Config;
