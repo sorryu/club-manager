@@ -9,7 +9,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-12 | Add and Load environment settings, from default.toml | sorryu
 2024-11-15 | Split environment settings into development and production environment | sorryu
 2024-11-15 | Add log | sorryu
-2024-11-17 | Add starting web server and Registration of Routes | sorryu
+2024-11-17 | Add starting web server and routes of club and user controllers | sorryu
 
 */
 
