@@ -23,6 +23,7 @@ struct CreateUserRequest {
     username: String,
     email: String,
     password: String,
+    number: String,
 }
 
 // User registration handler
