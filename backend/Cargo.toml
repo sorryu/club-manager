@@ -18,3 +18,7 @@ dotenv = "0.15"
 # 로그
 log = "0.4"
 env_logger = "0.10" # 기본적인 로깅 백엔드
+
+# JSON 및 데이터 처리
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0" # JSON 처리용
