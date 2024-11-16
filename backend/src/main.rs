@@ -9,6 +9,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-12 | Add and Load environment settings, from default.toml | sorryu
 2024-11-15 | Split environment settings into development and production environment | sorryu
 2024-11-15 | Add log | sorryu
+2024-11-17 | Add starting web server and Registration of Routes | sorryu
 
 */
 
@@ -18,6 +19,7 @@ use env_logger;
 
 use config::Config;
 
+use actix_web::{App, HttpServer, web};
 use sqlx::PgPool;
 
 mod controllers;
@@ -56,6 +58,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Loaded environment settings from config/{}.toml", env);
     info!("Connected to the database!");
+
+    // starting web server
+    HttpServer::new(move || {
+        App::new().app_data(web::Data::new(pool.clone())) // pass database pool to app
+            .configure(controllers::user_controller::init_routes)
+            .configure(controllers::club_controller::init_routes)
+    }).bind("127.0.0.1:8080")?.run().await?;
 
     // other logics
 
