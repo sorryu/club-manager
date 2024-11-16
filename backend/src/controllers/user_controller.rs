@@ -6,6 +6,7 @@
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Create user registration and query API handler functions | sorryu
+2024-11-17 | Add phone number in structure CreateUserRequest | sorryu
 
 */
 
