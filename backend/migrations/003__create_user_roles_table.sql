@@ -9,10 +9,10 @@ History(ex: 20xx-xx-xx | Modifications | name)
 
 */
 
-CREATE TABLE user_roles {
+CREATE TABLE user_roles (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
     club_id INT REFERENCES clubs(id),
     role VARCHAR(50),
     UNIQUE (user_id, club_id)
-}
+)

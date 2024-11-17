@@ -11,10 +11,10 @@ History(ex: 20xx-xx-xx | Modifications | name)
 
 */
 
-CREATE TABLE clubs {
+CREATE TABLE clubs (
     id SERIAL PRIMARY KEY,
     creation_userid INT REFERENCES users(id), -- need to add foreign key connection
     name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-}
+)
