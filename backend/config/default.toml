@@ -1,2 +1,5 @@
 [database]
 url = "postgres://sorryu:ryujs041221@localhost:5432/club_manager_mvp"
+
+[server]
+url = "127.0.0.1:8080"
