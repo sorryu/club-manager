@@ -10,7 +10,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 */
 
 use actix_web::{get, post, web, HttpResponse, Responder};
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 
 // data structures
 #[derive(Deserialize)]
