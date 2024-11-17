@@ -7,6 +7,7 @@
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Create user registration and query API handler functions | sorryu
 2024-11-17 | Add phone number in structure CreateUserRequest | sorryu
+2024-11-17 | Insert user information into database | sorryu
 
 */
 
@@ -18,6 +19,8 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use serde::{ Deserialize, Serialize };
 // serde : Data serialization, deserialization
 
+use sqlx::PgPool;
+
 // data structures
 #[derive(Deserialize)] // Convert data to rust structure
 struct CreateUserRequest {
@@ -25,6 +28,22 @@ struct CreateUserRequest {
     email: String,
     password: String,
     number: String,
+}
+
+// Insert user into database
+async fn insert_user(pool: web::Data<PgPool>, user_data: web::Json<CreateUserRequest>) -> impl Responder {
+    let result = sqlx::query!("INSERT INTO users (username, email, number, password_hash) VALUES ($1, $2, $3, $4)",
+                                                            user_data.username,
+                                                            user_data.email,
+                                                            user_data.number,
+                                                            user_data.password)
+        .execute(pool.get_ref())
+        .await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok().json("User created successfully."),
+        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err)),
+    }
 }
 
 // User registration handler
