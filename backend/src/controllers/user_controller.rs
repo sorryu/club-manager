@@ -23,7 +23,7 @@ use serde::{ Deserialize, Serialize };
 use sqlx::PgPool;
 
 // data structures
-// user request
+// user data request
 #[derive(Deserialize)] // Convert data to rust structure
 struct CreateUserRequest {
     username: String,
@@ -44,10 +44,10 @@ struct User {
 // Insert user into database
 async fn insert_user(pool: &PgPool, user_data: &CreateUserRequest) -> Result<(), sqlx::Error> {
     sqlx::query!("INSERT INTO users (username, email, number, password_hash) VALUES ($1, $2, $3, $4)",
-                                                            user_data.username,
-                                                            user_data.email,
-                                                            user_data.number,
-                                                            user_data.hashed_password)
+        user_data.username,
+        user_data.email,
+        user_data.number,
+        user_data.hashed_password)
     .execute(pool)
     .await?;
     Ok(())
@@ -56,7 +56,6 @@ async fn insert_user(pool: &PgPool, user_data: &CreateUserRequest) -> Result<(),
 // User registration handler
 #[post("/api/users")] // Attribute macro, POST HTTP request method path
 async fn create_user(pool: web::Data<PgPool>, user_data: web::Json<CreateUserRequest>) -> impl Responder { // set Responder to Return Value
-    // Need to add request data processing and database storage logic
     // Get request data
     let user = user_data.into_inner(); // Extract the inner data from web::Json
 
@@ -83,7 +82,7 @@ async fn get_users(pool: web::Data<PgPool>) -> impl Responder {
     
     match result {
         Ok(users) => HttpResponse::Ok().json(users),
-        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err)),
+        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {:?}", err)),
     }
 }
 
