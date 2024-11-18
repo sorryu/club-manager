@@ -6,6 +6,7 @@
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Create club Creation and query API handler functions | sorryu
+2024-11-18 | Create User structure, and Add insert logic of user information into database database lookup logic | sorryu
 
 */
 
