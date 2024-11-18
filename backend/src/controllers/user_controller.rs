@@ -8,6 +8,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Create user registration and query API handler functions | sorryu
 2024-11-17 | Add phone number in structure CreateUserRequest | sorryu
 2024-11-17 | Insert user information into database | sorryu
+2024-11-18 | Create User structure and Add database lookup logic | sorryu
 
 */
 
@@ -22,44 +23,68 @@ use serde::{ Deserialize, Serialize };
 use sqlx::PgPool;
 
 // data structures
+// user request
 #[derive(Deserialize)] // Convert data to rust structure
 struct CreateUserRequest {
     username: String,
     email: String,
-    password: String,
+    hashed_password: String,
+    number: String,
+}
+
+// User structures queried in the database
+#[derive(Serialize, sqlx::FromRow)] // Convert rust data to others
+struct User {
+    id: i32,
+    username: String,
+    email: String,
     number: String,
 }
 
 // Insert user into database
-async fn insert_user(pool: web::Data<PgPool>, user_data: web::Json<CreateUserRequest>) -> impl Responder {
-    let result = sqlx::query!("INSERT INTO users (username, email, number, password_hash) VALUES ($1, $2, $3, $4)",
+async fn insert_user(pool: &PgPool, user_data: &CreateUserRequest) -> Result<(), sqlx::Error> {
+    sqlx::query!("INSERT INTO users (username, email, number, password_hash) VALUES ($1, $2, $3, $4)",
                                                             user_data.username,
                                                             user_data.email,
                                                             user_data.number,
-                                                            user_data.password)
-        .execute(pool.get_ref())
-        .await;
-
-    match result {
-        Ok(_) => HttpResponse::Ok().json("User created successfully."),
-        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err)),
-    }
+                                                            user_data.hashed_password)
+    .execute(pool)
+    .await?;
+    Ok(())
 }
 
 // User registration handler
 #[post("/api/users")] // Attribute macro, POST HTTP request method path
-async fn create_user(user_data: web::Json<CreateUserRequest>) -> impl Responder { // set Responder to Return Value
+async fn create_user(pool: web::Data<PgPool>, user_data: web::Json<CreateUserRequest>) -> impl Responder { // set Responder to Return Value
     // Need to add request data processing and database storage logic
+    // Get request data
+    let user = user_data.into_inner(); // Extract the inner data from web::Json
 
-    HttpResponse::Ok().json(format!("User {} created!", user_data.username)) // .json: Serialize HTTP responses in JSON format
+    match insert_user(pool.get_ref(), &user).await {
+        Ok(_) => {
+            HttpResponse::Ok()
+                .json(format!("User {} created!", user.username))
+        },
+        Err(err) => {
+            HttpResponse::InternalServerError().body(format!("Error: {}", err))
+        },
+    };
+
+    HttpResponse::Ok().json(format!("User {} created!", user.username)) // .json: Serialize HTTP responses in JSON format
 }
 
 // All User lookup handler
 #[get("/api/users")] // GET HTTP request method path
-async fn get_users() -> impl Responder {
+async fn get_users(pool: web::Data<PgPool>) -> impl Responder {
     // need to add database lookup logic
-
-    HttpResponse::Ok().json(vec!["user1", "user2", "user3"]) // vec!: Generate vector, Dynamic array of variable lengths
+    let result = sqlx::query_as::<_, User>("SELECT id, username, email, number FROM users")
+        .fetch_all(pool.get_ref())
+        .await;
+    
+    match result {
+        Ok(users) => HttpResponse::Ok().json(users),
+        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err)),
+    }
 }
 
 // Set the in-module handler
