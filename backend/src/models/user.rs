@@ -13,10 +13,11 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 
 use serde::{ Serialize, Deserialize };
 use std::fmt::Debug;
+use sqlx::FromRow;
 
 use crate::utils::hashing::hash_password;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct UserResponse {
     pub id: i32,
     pub username: String,
@@ -24,7 +25,7 @@ pub struct UserResponse {
     pub number: String,
 }
 
-#[derive(Debug, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Deserialize, FromRow)]
 pub struct UserRequest {
     pub username: Option<String>,
     pub email: String,
@@ -33,7 +34,7 @@ pub struct UserRequest {
 }
 
 // Convert from/to Database
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct UserData {
     pub id: Option<i32>,
     pub username: Option<String>,
