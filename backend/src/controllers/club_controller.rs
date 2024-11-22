@@ -7,33 +7,17 @@
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Create club Creation and query API handler functions | sorryu
 2024-11-18 | Create User structure, and Add insert logic of user information into database database lookup logic | sorryu
+2024-11-22 | Connect the correct structure from crate:: | sorryu
 
 */
 
 use actix_web::{get, post, web, HttpResponse, Responder};
-use serde::{ Deserialize, Serialize };
 use sqlx::PgPool;
 
-// data structures
-// club data request
-#[derive(Deserialize)]
-struct CreateClubRequest {
-    creation_userid: i32,
-    name: String,
-    description: String,
-}
-
-// Club structures queried in the database
-#[derive(Serialize, sqlx::FromRow)]
-struct Club {
-    id: i32,
-    name: String,
-    creation_userid: i32,
-    description: String,
-}
+use crate::models::club::{ ClubData, ClubRequest, ClubResponse };
 
 // Insert club into database
-async fn insert_club(pool: &PgPool, club_data: &CreateClubRequest) -> Result<(), sqlx::Error> {
+async fn insert_club(pool: &PgPool, club_data: &ClubData) -> Result<(), sqlx::Error> {
     sqlx::query!("INSERT INTO clubs (name, creation_userid, description) VALUES ($1, $2, $3)",
         club_data.name,
         club_data.creation_userid,
@@ -45,35 +29,48 @@ async fn insert_club(pool: &PgPool, club_data: &CreateClubRequest) -> Result<(),
 
 // Club creation handler
 #[post("/api/clubs")]
-async fn create_club(pool: web::Data<PgPool>, club_data: web::Json<CreateClubRequest>) -> impl Responder {
+async fn create_club(pool: web::Data<PgPool>, club_request: web::Json<ClubRequest>) -> impl Responder {
     // need to add request data processing and database storage logic
     // Get request data
-    let club = club_data.into_inner();
+    let club_data = club_request.into_inner().into();
 
-    match insert_club(pool.get_ref(), &club).await {
+    match insert_club(pool.get_ref(), &club_data).await {
         Ok(_) => {
             HttpResponse::Ok()
-                .json(format!("Club {} created!", club.name))
+                .json(format!("Club {} created!", club_data.name.clone().unwrap_or_else(|| "unknown".to_string())))
         },
         Err(err) => {
             HttpResponse::InternalServerError().body(format!("Error: {}", err))
         },
-    };
-
-    HttpResponse::Ok().json(format!("Club {} created!", club.name))
+    }
 }
 
 // All Club lookup handler
 #[get("/api/clubs")]
 async fn get_clubs(pool: web::Data<PgPool>) -> impl Responder {
     // need to add database lookup logic
-    let result = sqlx::query_as::<_, Club>("SELECT id, name, creation_userid, description FROM clubs")
+    let result = sqlx::query_as::<_, ClubData>("SELECT id, name, creation_userid, description FROM clubs")
         .fetch_all(pool.get_ref())
         .await;
 
     match result {
-        Ok(clubs) => HttpResponse::Ok().json(clubs),
-        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {:?}", err))
+        Ok(clubs_data) => {
+            let clubs_response: Vec<ClubResponse> = {
+                let mut responses = Vec::new();
+                for club_data in clubs_data {
+                    match club_data.to_response(pool.get_ref()).await {
+                        Ok(response) => responses.push(response),
+                        Err(err) => {
+                            log::error!("Failed to convert club data to response: {:?}", err);
+                            return HttpResponse::InternalServerError().body("Failed to fetch clubs.");
+                        }
+                    }
+                }
+                responses
+            };
+            HttpResponse::Ok().json(clubs_response)
+        },
+        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err))
     }
 }
 
