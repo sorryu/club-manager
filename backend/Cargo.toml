@@ -7,26 +7,34 @@ build = "build.rs"
 [dependencies]
 # 라이브러리
 actix-web = "4.0"
-async-graphql = "3.0"
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls"] }
-redis = "0.22"
+async-graphql = "7.0"
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls"] }
+redis = "0.27"
 tokio = { version = "1.0", features = ["full"] }
 
 # 환경 세팅
-config = "0.13"
+config = "0.14"
 dotenv = "0.15"
 
 # 로그
 log = "0.4"
-env_logger = "0.10" # 기본적인 로깅 백엔드
+env_logger = "0.11" # 기본적인 로깅 백엔드
 
 # JSON 및 데이터 처리
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0" # JSON 처리용
+jsonwebtoken = "9.3"
+bcrypt = "0.16"
 
 # 전역 변수 처리
 once_cell = "1.13"
 
+# 정규식 처리
+regex = "1.7"
+
+# 날짜 및 시간
+chrono = "0.4"
+
 [build-dependencies]
 # TOML 파일 처리
-toml = "0.5"
+toml = "0.8"
