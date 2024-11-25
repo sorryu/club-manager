@@ -20,23 +20,21 @@ use log::{error, info};
 pub type GlobalPgPool = Arc<Mutex<Option<PgPool>>>;
 
 // Global PgPool
-pub static pool: Lazy<GlobalPgPool> = Lazy::new(|| {
-    Arc::new(Mutex::new(None))
-});
+pub static pool: Lazy<GlobalPgPool> = Lazy::new(|| {Arc::new(Mutex::new(None))});
 
 pub async fn initialize_pool() {
     let database_url = match get_database_url().await {
         Ok(url) => url,
         Err(e) => {
             error!("Failed to get database URL: {:?}", e);
-            return; // 에러가 발생하면 함수 종료
+            return;
         }
     };
 
     match PgPool::connect(&database_url).await {
         Ok(database_pool) => {
             let mut db_pool_guard = pool.lock().await;
-            *db_pool_guard = Some(database_pool); // 전역 풀에 실제 풀 설정
+            *db_pool_guard = Some(database_pool);
             info!("Database pool initialized successfully.");
         }
         Err(e) => {
