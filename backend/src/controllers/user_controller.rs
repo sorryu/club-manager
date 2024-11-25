@@ -10,6 +10,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Insert user information into database | sorryu
 2024-11-18 | Create User structure and Add database lookup logic | sorryu
 2024-11-22 | Connect the correct structure | sorryu
+2024-11-25 | use try_into and return Error | sorryu
 
 */
 
@@ -39,7 +40,12 @@ async fn insert_user(pool: &PgPool, user_data: &UserData) -> Result<(), sqlx::Er
 #[post("/api/users")] // Attribute macro, POST HTTP request method path
 async fn create_user(pool: web::Data<PgPool>, user_request: web::Json<UserRequest>) -> impl Responder { // set Responder to Return Value
     // Get request data
-    let user_data = user_request.into_inner().into(); // Extract the inner data from web::Json
+    let user_data = match user_request.into_inner().try_into() {
+        Ok(data) => data,
+        Err(err) => {
+            return HttpResponse::BadRequest().body(format!("Invalid input: {}", err));
+        }
+    }; // Extract the inner data from web::Json
 
     match insert_user(pool.get_ref(), &user_data).await {
         Ok(_) => {
