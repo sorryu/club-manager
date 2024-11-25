@@ -5,7 +5,7 @@
 
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
-2024-11-22 | 
+2024-11-22 | Create norm_email, norm_phone_number, norm_data | sorryu
 
 */
 

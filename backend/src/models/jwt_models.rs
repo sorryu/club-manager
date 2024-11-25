@@ -5,7 +5,7 @@
 
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
-2024-11-22 | Modifications | sorryu
+2024-11-22 | Create structure Claims | sorryu
 
 */
 
