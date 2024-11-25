@@ -8,12 +8,14 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-18 | Create default user structure, insert structure, response and request structure | sorryu
 2024-11-19 | Integration by UserResponse, UserRequest | sorryu
 2024-11-20 | Create UserData and define transformation between structures | sorryu
+2024-11-25 | Convert From to TryFrom for UserRequest to UserData | sorryu
 
 */
 
 use serde::{ Serialize, Deserialize };
-use std::fmt::Debug;
+use std::{ fmt::Debug, convert::TryFrom };
 use sqlx::FromRow;
+use log::error;
 
 use crate::utils::hashing::hash_password;
 
@@ -44,16 +46,20 @@ pub struct UserData {
 }
 
 // `UserRequest` -> `UserData`
-impl From<UserRequest> for UserData {
-    fn from(req: UserRequest) -> Self {
-        let hashed_password = hash_password(&req.password);
-        UserData {
+impl TryFrom<UserRequest> for UserData {
+    type Error = String;
+
+    fn try_from(req: UserRequest) -> Result<Self, Self::Error> {
+        let hashed_password = hash_password(&req.password)
+            .map_err(|e| format!("Password hashing failed: {}", e))?;
+
+        Ok(UserData {
             id: None,
             username: req.username,
             email: Some(req.email),
             number: req.number,
             hashed_password: Some(hashed_password),
-        }
+        })
     }
 }
 
