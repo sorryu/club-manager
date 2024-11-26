@@ -12,6 +12,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-22 | Connect the correct structure | sorryu
 2024-11-25 | use try_into and return Error | sorryu
 2024-11-26 | connect global pool from utils::db_pool | sorryu
+2024-11-26 | Separate database search logic, to be used in other places such as resolver | sorryu
 
 */
 
