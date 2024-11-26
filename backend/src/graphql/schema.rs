@@ -6,5 +6,4 @@
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 
-
 */
