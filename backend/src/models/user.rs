@@ -15,7 +15,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 use serde::{ Serialize, Deserialize };
 use std::{ fmt::Debug, convert::TryFrom };
 use sqlx::FromRow;
-use log::error;
+use async_graphql::SimpleObject;
 
 use crate::utils::hashing::hash_password;
 
@@ -36,7 +36,7 @@ pub struct UserRequest {
 }
 
 // Convert from/to Database
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject)]
 pub struct UserData {
     pub id: Option<i32>,
     pub username: Option<String>,

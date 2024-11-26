@@ -11,6 +11,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 */
 
 use serde::{Serialize, Deserialize};
+use async_graphql::SimpleObject;
 use std::fmt::Debug;
 use crate::models::user::{UserData, UserResponse};
 use sqlx::{ Pool, Postgres, FromRow };
@@ -30,7 +31,7 @@ pub struct ClubRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject)]
 pub struct ClubData {
     pub id: Option<i32>,
     pub name: Option<String>,
