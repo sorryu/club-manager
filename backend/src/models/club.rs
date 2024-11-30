@@ -7,16 +7,19 @@
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-20 | Create ClubResponse, ClubRequest, ClubData | sorryu
 2024-11-20 | Define transformation between structures | sorryu
+2024-11-29 | Add parameters FromRow, SimpleObject, and InputObject to the derive to handle the input/output of the database and graphpl | sorryu
 
 */
 
 use serde::{Serialize, Deserialize};
-use async_graphql::SimpleObject;
+use async_graphql::{ SimpleObject, InputObject };
 use std::fmt::Debug;
-use crate::models::user::{UserData, UserResponse};
-use sqlx::{ Pool, Postgres, FromRow };
+use sqlx::{ PgPool, Pool, Postgres, FromRow, Error as SqlError };
+use log::error;
 
-#[derive(Debug, Serialize, FromRow)]
+use crate::models::user::{UserData, UserResponse};
+
+#[derive(Debug, Serialize, FromRow, SimpleObject, InputObject)]
 pub struct ClubResponse {
     pub id: i32,
     pub name: String,
@@ -24,14 +27,14 @@ pub struct ClubResponse {
     pub description: String,
 }
 
-#[derive(Debug, Deserialize, FromRow)]
+#[derive(Debug, Deserialize, FromRow, SimpleObject, InputObject)]
 pub struct ClubRequest {
     pub name: Option<String>,
     pub creation_userid: Option<i32>,
     pub description: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject)]
+#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject, InputObject)]
 pub struct ClubData {
     pub id: Option<i32>,
     pub name: Option<String>,
@@ -53,7 +56,7 @@ impl From<ClubRequest> for ClubData {
 
 // 비동기 변환 함수: `ClubData` -> `ClubResponse`
 impl ClubData {
-    pub async fn to_response(self, pool: &Pool<Postgres>) -> Result<ClubResponse, sqlx::Error> {
+    pub async fn to_response(self, pool: &Pool<Postgres>) -> Result<ClubResponse, SqlError> {
         let user = sqlx::query_as::<_, UserData>(
             "SELECT id, username, email, number, hashed_password FROM users WHERE id = $1",
         )
@@ -67,5 +70,15 @@ impl ClubData {
             creation_user: user.into(),
             description: self.description.unwrap_or_default(),
         })
+    }
+}
+
+pub async fn convert_to_response(club_data: ClubData, pool: &PgPool) -> Option<ClubResponse> {
+    match club_data.to_response(pool).await {
+        Ok(club_response) => Some(club_response),
+        Err(err) => {
+            error!("Failed to convert club data to response: {:?}", err);
+            None
+        }
     }
 }

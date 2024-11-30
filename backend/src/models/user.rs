@@ -9,17 +9,18 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-19 | Integration by UserResponse, UserRequest | sorryu
 2024-11-20 | Create UserData and define transformation between structures | sorryu
 2024-11-25 | Convert From to TryFrom for UserRequest to UserData | sorryu
+2024-11-29 | Add parameters FromRow, SimpleObject, and InputObject to the derive to handle the input/output of the database and graphpl | sorryu
 
 */
 
 use serde::{ Serialize, Deserialize };
 use std::{ fmt::Debug, convert::TryFrom };
 use sqlx::FromRow;
-use async_graphql::SimpleObject;
+use async_graphql::{ SimpleObject, InputObject };
 
 use crate::utils::hashing::hash_password;
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, SimpleObject, InputObject)]
 pub struct UserResponse {
     pub id: i32,
     pub username: String,
@@ -27,7 +28,7 @@ pub struct UserResponse {
     pub number: String,
 }
 
-#[derive(Debug, Deserialize, FromRow)]
+#[derive(Debug, Deserialize, FromRow, SimpleObject, InputObject)]
 pub struct UserRequest {
     pub username: Option<String>,
     pub email: String,
@@ -36,7 +37,7 @@ pub struct UserRequest {
 }
 
 // Convert from/to Database
-#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject)]
+#[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject, InputObject)]
 pub struct UserData {
     pub id: Option<i32>,
     pub username: Option<String>,
