@@ -7,38 +7,31 @@
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-20 | Create pool from database | sorryu
 2024-11-20 | Treat pool as global variable | sorryu
+2024-11-29 | Change pool to upper case name, 'Pool' | sorryu
+2024-11-30 | Delete global Pool and Modify initialize_pool to return database_pool | sorryu
 
 */
 
-use sqlx::PgPool;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use once_cell::sync::Lazy;
+use sqlx::{ PgPool, Error as SqlError, Pool, Postgres };
+use log::{ error, info };
+
 use crate::utils::settings::get_database_url;
-use log::{error, info};
 
-pub type GlobalPgPool = Arc<Mutex<Option<PgPool>>>;
+pub type DbPool = Pool<Postgres>;
 
-// Global PgPool
-pub static pool: Lazy<GlobalPgPool> = Lazy::new(|| {Arc::new(Mutex::new(None))});
-
-pub async fn initialize_pool() {
-    let database_url = match get_database_url().await {
-        Ok(url) => url,
-        Err(e) => {
-            error!("Failed to get database URL: {:?}", e);
-            return;
-        }
-    };
+pub async fn initialize_pool() -> Result<PgPool, SqlError> {
+    let database_url = get_database_url()
+        .await
+        .map_err(|err| SqlError::Protocol(format!("Database pool is not initialized: {}", err)))?;
 
     match PgPool::connect(&database_url).await {
         Ok(database_pool) => {
-            let mut db_pool_guard = pool.lock().await;
-            *db_pool_guard = Some(database_pool);
             info!("Database pool initialized successfully.");
+            Ok(database_pool)
         }
         Err(e) => {
             error!("Failed to create database pool: {:?}", e);
+            Err(e)
         }
     }
 }
