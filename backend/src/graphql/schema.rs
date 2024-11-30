@@ -6,36 +6,23 @@
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-28 | Create QueryRoot, MutationRoot and Merged to Schema | sorryu
+2024-11-29 | Unified multiple structures into QueryRoot and MutationRoot structures, respectively | sorryu
 
 */
 
 use async_graphql::{ Schema, MergedObject };
 use crate::graphql::resolvers as rsv;
 use rsv::{
-    club_resolver,
-    user_resolver
+    user_resolver::{ UserQuery, UserMutation },
+    club_resolver::{ ClubQuery, ClubMutation },
 };
-
-// User
-#[derive(MergedObject, Default)]
-pub struct UserQueryRoot; // To be mapped with resolvers from `user_resolver::UserQuery`
-
-#[derive(MergedObject, Default)]
-pub struct UserMutationRoot; // To be mapped with resolvers from `user_resolver::UserMutation`
-
-// Club
-#[derive(MergedObject, Default)]
-pub struct ClubQueryRoot; // To be mapped with resolvers from `club_resolver::ClubQuery`
-
-#[derive(MergedObject, Default)]
-pub struct ClubMutationRoot; // To be mapped with resolvers from `club_resolver::ClubMutation`
 
 // Unified Shema
 #[derive(MergedObject, Default)]
-pub struct QueryRoot(UserQueryRoot, ClubQueryRoot);
+pub struct QueryRoot(UserQuery, ClubQuery);
 
 #[derive(MergedObject, Default)]
-pub struct MutationRoot(UserMutationRoot, ClubMutationRoot);
+pub struct MutationRoot(UserMutation, ClubMutation);
 
 // Final Schema
 pub type AppSchema = Schema<QueryRoot, MutationRoot, ()>;
