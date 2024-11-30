@@ -10,6 +10,10 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-22 | Connect the correct structure from crate:: | sorryu
 2024-11-26 | connect global pool from utils::db_pool | sorryu
 2024-11-26 | Separate database search logic, to be used in other places such as resolver | sorryu
+2024-11-29 | Change sqlx::Error to Error | sorryu
+2024-11-29 | change insert_club into public function | sorryu
+2024-11-29 | Move the insert_club function, get_all_clubs function, which was on the controller to the service location | sorryu
+2024-11-30 | Delete global pool and get parameter pool for web::Data<PgPool> | sorryu
 
 */
 
@@ -18,79 +22,54 @@ use sqlx::PgPool;
 use log::error;
 
 use crate::{
-    models::club::{ ClubData, ClubRequest, ClubResponse },
-    utils::db_pool::pool,
+    models::club::{ ClubRequest, convert_to_response },
+    services::club_service::{ insert_club, get_all_clubs },
 };
-
-// Insert club into database
-async fn insert_club(db_pool: &PgPool, club_data: &ClubData) -> Result<(), sqlx::Error> {
-    sqlx::query!("INSERT INTO clubs (name, creation_userid, description) VALUES ($1, $2, $3)",
-        club_data.name,
-        club_data.creation_userid,
-        club_data.description)
-    .execute(db_pool)
-    .await?;
-    Ok(())
-}
 
 // Club creation handler
 #[post("/api/clubs")]
-async fn create_club(club_request: web::Json<ClubRequest>) -> impl Responder {
-    let db_pool_guard = pool.lock().await;
-    if let Some(db_pool) = &*db_pool_guard {
-        // need to add request data processing and database storage logic
-        // Get request data
-        let club_data = club_request.into_inner().into();
-
-        match insert_club(db_pool, &club_data).await {
-            Ok(_) => {
-                HttpResponse::Ok()
-                    .json(format!("Club {} created!", club_data.name.clone().unwrap_or_else(|| "unknown".to_string())))
-            },
-            Err(err) => {
-                error!("Error: {:?}", err);
-                HttpResponse::InternalServerError().body(format!("Cannot Create Club: {}", err))
-            },
+async fn create_club(pool: web::Data<PgPool>, club_request: web::Json<ClubRequest>) -> impl Responder {
+    let club_data = match club_request.into_inner().try_into() {
+        Ok(data) => data,
+        Err(err) => {
+            error!("Error: {:?}", err);
+            return HttpResponse::BadRequest()
+                .body(format!("Invalid input: {}", err));
         }
-    } else {
-        HttpResponse::InternalServerError().body("Database pool not initialized!")
-    }
-}
+    };
 
-pub async fn get_all_clubs(db_pool: &PgPool) -> Result<Vec<ClubData>, sqlx::Error> {
-    sqlx::query_as::<_, ClubData>("SELECT id, name, creation_userid, description FROM clubs")
-        .fetch_all(db_pool)
-        .await
+    match insert_club(pool.get_ref(), &club_data).await {
+        Ok(_) => {
+            HttpResponse::Ok()
+                .json(format!("Club {} created!", 
+                    club_data.name
+                    .clone()
+                    .unwrap_or_else(|| "unknown".to_string())))
+        },
+        Err(err) => {
+            error!("Error: {:?}", err);
+            HttpResponse::InternalServerError()
+                .body(format!("Cannot Create Club: {}", err))
+        }
+    }
 }
 
 // All Club lookup handler
 #[get("/api/clubs")]
-async fn get_clubs() -> impl Responder {
-    let db_pool_guard = pool.lock().await;
-    if let Some(db_pool) = &*db_pool_guard {
-        match get_all_clubs(db_pool).await {
-            Ok(clubs_data) => {
-                let clubs_response: Vec<ClubResponse> = {
-                    let mut responses = Vec::new();
-                    for club_data in clubs_data {
-                        match club_data.to_response(db_pool).await {
-                            Ok(response) => responses.push(response),
-                            Err(err) => {
-                                log::error!("Failed to convert club data to response: {:?}", err);
-                                return HttpResponse::InternalServerError().body("Failed to fetch clubs.");
-                            }
-                        }
-                    }
-                    responses
-                };
-                HttpResponse::Ok().json(clubs_response)
-            },
-            Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err))
-        }
-    } else {
-        HttpResponse::InternalServerError().body("Database pool is not initialized.")
+async fn get_clubs(pool: web::Data<PgPool>) -> impl Responder {
+    match get_all_clubs(pool.get_ref()).await {
+        Ok(clubs_data) => {
+            let mut clubs_response = Vec::new();
+
+            for club_data in clubs_data {
+                clubs_response
+                    .push(convert_to_response(club_data, pool.get_ref()).await);
+            }
+
+            HttpResponse::Ok().json(clubs_response)
+        },
+        Err(err) => HttpResponse::InternalServerError().body(format!("Error: {}", err))
     }
-    
 }
 
 // Set the in-module handler
