@@ -12,6 +12,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-17 | Add starting web server and routes of club and user controllers | sorryu
 2024-11-18 | Delete env and change to get url with settings | sorryu
 2024-11-20 | Delete direct database pool settings and Use utils/db_pool | sorryu
+2024-11-30 | Delete global Pool and get database pool from db_pool.rs | sorryu
 
 */
 
@@ -29,7 +30,7 @@ mod utils;
 mod websockets;
 
 use utils::settings::get_server_url;
-use utils::db_pool::{pool, initialize_pool};
+use utils::db_pool::initialize_pool;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     trace!("Application Starting...");
 
     // Initialize the database pool
-    initialize_pool().await;
+    let database_pool = initialize_pool().await?;
 
     info!("Connected to the database!");
 
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // starting web server
     HttpServer::new(move || {
-        App::new().app_data(web::Data::new(pool.clone())) // pass database pool to app
+        App::new().app_data(web::Data::new(database_pool.clone())) // pass database pool to app
             .configure(controllers::user_controller::init_routes)
             .configure(controllers::club_controller::init_routes)
     }).bind(web_server_url)?.run().await?;
