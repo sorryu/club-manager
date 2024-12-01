@@ -6,6 +6,7 @@
 /*
 History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-29 | Move the insert_user function, get_all_users function, which was on the controller to the service location | sorryu
+2024-12-02 | Convert number to phone_number | sorryu
 
 */
 
@@ -14,10 +15,10 @@ use crate::models::user::UserData;
 
 // Insert user into database
 pub async fn insert_user(db_pool: &PgPool, user_data: &UserData) -> Result<(), Error> {
-    sqlx::query!("INSERT INTO users (username, email, number, password_hash) VALUES ($1, $2, $3, $4)",
+    sqlx::query!("INSERT INTO users (username, email, phone_number, password_hash) VALUES ($1, $2, $3, $4)",
         user_data.username,
         user_data.email,
-        user_data.number,
+        user_data.phone_number,
         user_data.hashed_password)
     .execute(db_pool)
     .await?;
