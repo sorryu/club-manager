@@ -9,6 +9,7 @@ History(ex: 20xx-xx-xx | Modifications(what, how, why) | name)
 2024-11-20 | Define transformation between structures | sorryu
 2024-11-29 | Add parameters FromRow, SimpleObject, and InputObject to the derive to handle the input/output of the database and graphpl | sorryu
 2024-12-02 | Exclude Option from ClubRequest Structure | sorryu
+2024-12-05 | Change the type of creation_userid and description to optional among the elements in ClubRequest | sorryu
 
 */
 
@@ -31,8 +32,8 @@ pub struct ClubResponse {
 #[derive(Debug, Deserialize, FromRow, SimpleObject, InputObject)]
 pub struct ClubRequest {
     pub name: String,
-    pub creation_userid: i32,
-    pub description: String,
+    pub creation_userid: Option<i32>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, SimpleObject, InputObject)]
@@ -49,8 +50,8 @@ impl From<ClubRequest> for ClubData {
         ClubData {
             id: None,
             name: Some(req.name),
-            creation_userid: Some(req.creation_userid),
-            description: Some(req.description),
+            creation_userid: req.creation_userid,
+            description: req.description,
         }
     }
 }
